@@ -1,7 +1,3 @@
-
-
-
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hommie/app/utils/app_colors.dart';
@@ -12,6 +8,11 @@ import 'package:hommie/modules/shared/views/chat_screen.dart';
 import 'package:hommie/modules/shared/views/favorites_screen.dart';
 import 'package:hommie/modules/shared/views/profile_screen.dart';
 
+// ═══════════════════════════════════════════════════════════
+// MAIN NAV VIEW - FIXED
+// No circular reference - this is the ROOT container
+// ═══════════════════════════════════════════════════════════
+
 class MainNavView extends StatelessWidget {
   const MainNavView({super.key});
 
@@ -19,6 +20,7 @@ class MainNavView extends StatelessWidget {
   Widget build(BuildContext context) {
     final nav = Get.find<NavController>();
 
+    // All pages WITHOUT bottom nav bar
     final pages = const [
       OwnerHomeScreen(),
       ChatScreen(),
@@ -29,21 +31,38 @@ class MainNavView extends StatelessWidget {
 
     return Obx(() {
       return Scaffold(
+        // Display the selected page
         body: pages[nav.currentIndex.value],
-    
+        
+        // Bottom navigation bar
         bottomNavigationBar: BottomNavigationBar(
-              backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.primary,
           currentIndex: nav.currentIndex.value,
           onTap: nav.changeTab,
           type: BottomNavigationBarType.fixed,
+          selectedItemColor: Colors.white,
+          unselectedItemColor: Colors.white70,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home,color: AppColors.backgroundLight,), label: "Home"
-            
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home, color: AppColors.backgroundLight),
+              label: "Home",
             ),
-            BottomNavigationBarItem(icon: Icon(Icons.message,color: AppColors.backgroundLight), label: "Messages"),
-            BottomNavigationBarItem(icon: Icon(Icons.favorite,color: AppColors.backgroundLight), label: "Favorite"),
-            BottomNavigationBarItem(icon: Icon(Icons.post_add,color: AppColors.backgroundLight), label: "PostAd"),
-            BottomNavigationBarItem(icon: Icon(Icons.person,color: AppColors.backgroundLight), label: "Profile"),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.message, color: AppColors.backgroundLight),
+              label: "Messages",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.favorite, color: AppColors.backgroundLight),
+              label: "Favorite",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.post_add, color: AppColors.backgroundLight),
+              label: "PostAd",
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person, color: AppColors.backgroundLight),
+              label: "Profile",
+            ),
           ],
         ),
       );

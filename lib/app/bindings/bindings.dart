@@ -1,22 +1,53 @@
-
 import 'package:get/get.dart';
-import 'package:hommie/modules/renter/controllers/apartment_details_controller.dart';
-import 'package:hommie/modules/renter/controllers/home_controller.dart';
-import 'package:hommie/modules/auth/controllers/loginscreen_controller.dart';
-import 'package:hommie/modules/auth/controllers/signup_step1_controller.dart';
-import 'package:hommie/modules/auth/controllers/signup_step2_controller.dart';
-import 'package:hommie/modules/auth/controllers/signup_step3_controller.dart';
-import 'package:hommie/modules/auth/controllers/signup_step4_controller.dart';
-import 'package:hommie/modules/renter/views/home.dart';
+import 'package:hommie/data/services/auth_service.dart';
+import 'package:hommie/data/models/user/user_permission_controller.dart';
+import 'package:hommie/data/repositories/apartment_repository.dart';
+import 'package:hommie/data/services/bookings_service.dart';
+import 'package:hommie/data/services/owner_aparment_service.dart';
+import 'package:hommie/data/services/token_storage_service.dart';
+import 'package:hommie/modules/owner/controllers/post_ad_controller.dart';
+import 'package:hommie/modules/owner/controllers/nav_controller.dart';
 
-class Binding extends Bindings {
+
+class InitialBinding extends Bindings {
   @override
   void dependencies() {
-   Get.lazyPut(() => SignupStep1Controller(), fenix: true);
-   Get.lazyPut(() => SignupStep2Controller(), fenix: true);
-   Get.lazyPut(() => SignupStep3Controller(), fenix: true);
-   Get.lazyPut(() => SignupStep4Controller(), fenix: true);
-   Get.lazyPut(() => HomeController(), fenix: true);
-   Get.lazyPut(() => ApartmentDetailsController(), fenix: true);
+   
+
+    Get.put(AuthService(), permanent: true);
+    print(' AuthService (permanent)');
+
+    Get.put(UserPermissionsController(), permanent: true);
+    print(' UserPermissionsController (permanent)');
+    Get.lazyPut(() => TokenStorageService());
+    Get.lazyPut(() => BookingService());
+
+
+    // Create ApartmentApi first
+    final apartmentApi = ApartmentApi();
+    Get.put(apartmentApi);
+    print(' ApartmentApi');
+
+
+
+    //  Pass apartmentApi to ApartmentRepository constructor
+    final apartmentRepo = ApartmentRepository(apartmentApi);
+    Get.put(apartmentRepo);
+    print(' ApartmentRepository');
+
+   
+    // CONTROLLERS (Depend on repositories)
+   
+
+    Get.put(PostAdController(apartmentRepo));
+    print(' PostAdController');
+
+    // Navigation controller
+    Get.put(NavController());
+    print(' NavController');
+
+    print('');
+    print('[InitialBinding] Core dependencies initialized');
+    print(' Ready to start app!');
   }
 }

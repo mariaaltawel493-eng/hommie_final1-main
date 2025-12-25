@@ -8,7 +8,7 @@ class SignupStep3Screen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<SignupStep3Controller>();
+    final controller = Get.put(SignupStep3Controller());
 
     const labelStyle = TextStyle(
       fontSize: 16, 

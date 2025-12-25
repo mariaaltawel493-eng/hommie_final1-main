@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:hommie/modules/owner/views/main_nav_view.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../data/models/signup/signup_step4_model.dart';
 import '../../../data/services/signup_step4_service.dart';
@@ -58,9 +59,9 @@ class SignupStep4Controller extends GetxController {
       print("Finalizing account for role: $storedRole");
 
       if (storedRole == 'owner') {
-        Get.offAll(() => const OwnerHomeScreen());
+        Get.offAll(() => const MainNavView());
       } else {
-        Get.offAll(() => const Home());
+        Get.offAll(() => const RenterHomeScreen());
       }
     box.remove('temp_signup_role');
     finalizeAccount();

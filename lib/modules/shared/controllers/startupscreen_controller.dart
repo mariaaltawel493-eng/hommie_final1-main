@@ -18,7 +18,7 @@ class StartupscreenController extends GetxController {
         if (role == 'owner') {
           Get.offAll(() => const OwnerHomeScreen());
         } else {
-          Get.offAll(() => const Home());
+          Get.offAll(() => const RenterHomeScreen());
         }
       } else {
         Get.offAll(() => WelcomeScreen());

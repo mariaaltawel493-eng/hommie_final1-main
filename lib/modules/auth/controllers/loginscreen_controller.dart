@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:hommie/helpers/loading_helper.dart';
-import 'package:hommie/data/models/user/user_login_model.dart';
-import 'package:hommie/data/services/auth_service.dart';
-import 'package:hommie/modules/shared/views/empty_screen.dart';
-import 'package:hommie/modules/renter/views/home.dart';
 import 'package:hommie/app/utils/app_colors.dart';
-import 'package:hommie/modules/shared/views/welcomescreen.dart';
+import 'package:hommie/data/models/user/user_login_model.dart';
+import 'package:hommie/data/models/user/user_permission_controller.dart';
+import 'package:hommie/data/services/auth_service.dart';
+import 'package:hommie/helpers/loading_helper.dart';
+import 'package:hommie/modules/owner/views/main_nav_view.dart';
+import 'package:hommie/modules/owner/views/owner_home_screen.dart';
+import 'package:hommie/modules/renter/views/home.dart';
+import 'package:hommie/modules/shared/views/empty_screen.dart';
 
-import '../../owner/views/owner_home_screen.dart';
 
 class LoginScreenController extends GetxController {
   final AuthService _authService = Get.put(AuthService());
+  final permissions = Get.put(UserPermissionsController());
   var logingFirstTime = false;
   final userPhoneController = TextEditingController();
   final passwordController = TextEditingController();
@@ -46,8 +48,15 @@ class LoginScreenController extends GetxController {
     return null;
   }
 
+
   Future<void> login() async {
     if (!key.currentState!.validate()) return;
+
+    print('');
+    print('═══════════════════════════════════════════════════════════');
+    print(' LOGIN STARTED');
+    print('═══════════════════════════════════════════════════════════');
+    print('   Phone: ${userPhoneController.text}');
 
     final user = UserLoginModel(
       phone: userPhoneController.text,
@@ -67,32 +76,80 @@ class LoginScreenController extends GetxController {
 
         if (data.token != null) {
           final box = GetStorage();
+          
+          print('');
+          print(' LOGIN SUCCESSFUL');
+          print('   Token: ${data.token?.substring(0, 20)}...');
+          print('   Role: ${data.role}');
+          print('   Is Approved: ${data.isApproved}');
+
+          // Save all user data
           box.write('access_token', data.token);
           box.write('user_role', data.role);
-          print('User Role: ${data.role}');
-          print('User Token: ${data.token}');
-          Get.snackbar('Success', 'Logged in successfully');
+          box.write('role', data.role);  // For compatibility
+          box.write('is_approved', data.isApproved ?? false);
+
+      
+          permissions.updateApprovalStatus(
+            data.isApproved ?? false,
+            data.role ?? '',
+          );
+
+          print('   User Role: ${data.role}');
+          print('   User Token: ${data.token}');
+
+          Get.snackbar(
+            'Success', 
+            'Logged in successfully',
+            backgroundColor: AppColors.success,
+            colorText: AppColors.backgroundLight,
+            icon: const Icon(Icons.check_circle, color: Colors.white),
+          );
+
+          await Future.delayed(const Duration(milliseconds: 500));
+
+          // Navigate based on role
           if (data.role == 'renter') {
-            Get.offAll(() => Home());
+            print('  Navigating to Renter Home');
+            Get.offAll(() => RenterHomeScreen());
           } else if (data.role == 'owner') {
-            Get.offAll(() => OwnerHomeScreen());
+            print('Navigating to Owner Home');
+            Get.offAll( MainNavView());
           } else {
-            Get.offAll(() => Home());
+            print(' Navigating to Default Home');
+            Get.offAll(() => RenterHomeScreen());
+          }
+          if (!(data.isApproved ?? false)) {
+            print(' User is pending approval');
+            Future.delayed(const Duration(milliseconds: 1000), () {
+              permissions.showPendingApprovalMessage();
+            });
           }
 
+
         } else {
+          print(' No token received');
           Get.snackbar("Error", "Login failed: No authorization token received.");
         }
       } else {
+        print(' LOGIN FAILED');
+        print('   Status: ${response.statusCode}');
         Get.snackbar("Error", "Invalid phone number or password.");
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
       LoadingHelper.hide();
       isLoading.value = false;
+      
+      print(' LOGIN EXCEPTION');
+      print('   Error: $e');
+      print('   Stack: ${stackTrace.toString().split('\n').take(3).join('\n')}');
+      
       Get.snackbar('Error', 'Connection error!');
     }
   }
 
+
+  
   Future<void> sendResetOtp() async {
     if (resetPhoneController.text.length < 9) {
       Get.snackbar("Error", "Please enter a valid phone number.");
@@ -109,88 +166,14 @@ class LoginScreenController extends GetxController {
       if (response.statusCode == 200) {
         Get.back();
         Get.snackbar("Success", "Verification code sent successfully.");
-        Get.to(()=> EmptyScreen());
+        Get.to(() => EmptyScreen());
         showOtpDialog();
       } else {
-        String serverError = response.bodyString ?? 'Empty response body';
-        String status = response.statusCode.toString();
-
-        Get.snackbar(
-          "Error",
-          "Failed. Status: $status. Server Response: $serverError",
-        );
+        Get.snackbar("Error", "Failed to send verification code.");
       }
     } catch (e) {
       LoadingHelper.hide();
-      Get.snackbar('Error', 'Connection error! Please check your network.');
-    }
-  }
-
-  Future<void> verifyResetOtp() async {
-    if (otpController.text.length != 6) {
-      Get.snackbar("Error", "Please enter a 6-digit verification code.");
-      return;
-    }
-
-    LoadingHelper.show();
-    try {
-      final response = await _authService.verifyResetOtp(
-        resetPhoneController.text,
-        otpController.text,
-      );
-      LoadingHelper.hide();
-
-      if (response.statusCode == 200) {
-        Get.back();
-        newPasswordController.clear();
-         Get.to(()=> EmptyScreen());
-        showResetPasswordDialog();
-      } else {
-        String serverError = response.bodyString ?? 'Empty response body';
-        String status = response.statusCode.toString();
-        Get.snackbar(
-          "Error",
-          "Verification failed. Status: $status. Server Response: $serverError",
-        );
-      }
-    } catch (e) {
-      LoadingHelper.hide();
-      Get.snackbar('Error', 'Connection error!');
-    }
-  }
-
-  Future<void> resetPassword() async {
-    if (newPasswordController.text.length < 6) {
-      Get.snackbar("Error", "The password must be at least 6 characters long.");
-      return;
-    }
-
-    LoadingHelper.show();
-    try {
-      final response = await _authService.resetPassword(
-        resetPhoneController.text,
-        newPasswordController.text,
-      );
-      LoadingHelper.hide();
-
-      if (response.statusCode == 200) {
-        Get.back();
-        Get.snackbar(
-          "Success",
-          "Password updated successfully. You can log in now.",
-        );
-        Get.offAll(() => WelcomeScreen());
-      } else {
-        String serverError = response.bodyString ?? 'Empty response body';
-        String status = response.statusCode.toString();
-        Get.snackbar(
-          "Error",
-          "Password update failed. Status: $status. Server Response: $serverError",
-        );
-      }
-    } catch (e) {
-      LoadingHelper.hide();
-      Get.snackbar('Error', 'Connection error!');
+      Get.snackbar("Error", "Connection error!");
     }
   }
 
@@ -213,28 +196,35 @@ class LoginScreenController extends GetxController {
             TextFormField(
               controller: resetPhoneController,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: "Phone Number",
-                prefixIcon: Icon(
-                  Icons.phone,
-                  color: AppColors.textSecondaryLight,
+              decoration: InputDecoration(
+                hintText: "Phone Number",
+                prefixIcon: const Icon(Icons.phone, color: AppColors.textSecondaryLight),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                border: OutlineInputBorder(),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                ),
               ),
             ),
-            const SizedBox(height: 15),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: sendResetOtp,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text("Cancel"),
                 ),
-                child: const Text(
-                  "Confirm and Send Code",
-                  style: TextStyle(color: AppColors.backgroundLight),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: sendResetOtp,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                  child: const Text("Send Code"),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -245,7 +235,7 @@ class LoginScreenController extends GetxController {
   void showOtpDialog() {
     otpController.clear();
     Get.defaultDialog(
-      title: "Verification Code",
+      title: "Verify OTP",
       titleStyle: const TextStyle(
         color: AppColors.primary,
         fontWeight: FontWeight.bold,
@@ -254,33 +244,42 @@ class LoginScreenController extends GetxController {
       content: SingleChildScrollView(
         child: Column(
           children: [
-            Text(
-              "A code has been sent to ${resetPhoneController.text}. Enter the code:",
+            const Text(
+              "Enter the verification code sent to your phone.",
             ),
             const SizedBox(height: 15),
             TextFormField(
               controller: otpController,
               keyboardType: TextInputType.number,
-              maxLength: 6,
-              textAlign: TextAlign.center,
-              decoration: const InputDecoration(
-                labelText: "Enter Code",
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                hintText: "OTP Code",
+                prefixIcon: const Icon(Icons.pin, color: AppColors.textSecondaryLight),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                ),
               ),
             ),
-            const SizedBox(height: 15),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: verifyResetOtp,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text("Cancel"),
                 ),
-                child: const Text(
-                  "Verify",
-                  style: TextStyle(color: AppColors.backgroundLight),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: verifyOtp,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                  child: const Text("Verify"),
                 ),
-              ),
+              ],
             ),
           ],
         ),
@@ -288,7 +287,35 @@ class LoginScreenController extends GetxController {
     );
   }
 
-  void showResetPasswordDialog() {
+  Future<void> verifyOtp() async {
+    if (otpController.text.length < 4) {
+      Get.snackbar("Error", "Please enter a valid OTP.");
+      return;
+    }
+
+    LoadingHelper.show();
+    try {
+      final response = await _authService.verifyResetOtp(
+        resetPhoneController.text,
+        otpController.text,
+      );
+      LoadingHelper.hide();
+
+      if (response.statusCode == 200) {
+        Get.back();
+        Get.snackbar("Success", "OTP verified successfully.");
+        showNewPasswordDialog();
+      } else {
+        Get.snackbar("Error", "Invalid OTP.");
+      }
+    } catch (e) {
+      LoadingHelper.hide();
+      Get.snackbar("Error", "Connection error!");
+    }
+  }
+
+  void showNewPasswordDialog() {
+    newPasswordController.clear();
     Get.defaultDialog(
       title: "New Password",
       titleStyle: const TextStyle(
@@ -296,41 +323,87 @@ class LoginScreenController extends GetxController {
         fontWeight: FontWeight.bold,
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      content: Column(
-        children: [
-          const Text("Enter the new password for your account:"),
-          const SizedBox(height: 15),
-          TextFormField(
-            controller: newPasswordController,
-            obscureText: true,
-            decoration: const InputDecoration(
-              labelText: "New Password",
-              prefixIcon: Icon(
-                Icons.lock_open,
-                color: AppColors.textSecondaryLight,
-              ),
-              border: OutlineInputBorder(),
+      content: SingleChildScrollView(
+        child: Column(
+          children: [
+            const Text(
+              "Enter your new password.",
             ),
-          ),
-          const SizedBox(height: 15),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: resetPassword,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-              ),
-              child: const Text(
-                "Change Password",
-                style: TextStyle(color: AppColors.backgroundLight),
+            const SizedBox(height: 15),
+            TextFormField(
+              controller: newPasswordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                hintText: "New Password",
+                prefixIcon: const Icon(Icons.lock, color: AppColors.textSecondaryLight),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.primary, width: 2),
+                ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Get.back(),
+                  child: const Text("Cancel"),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: resetPassword,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                  ),
+                  child: const Text("Reset"),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
+
+  Future<void> resetPassword() async {
+    if (newPasswordController.text.length < 6) {
+      Get.snackbar("Error", "Password must be at least 6 characters.");
+      return;
+    }
+
+    LoadingHelper.show();
+    try {
+  
+      final response = await _authService.resetPassword(
+        resetPhoneController.text,    
+        newPasswordController.text,   
+      );
+      LoadingHelper.hide();
+
+      if (response.statusCode == 200) {
+        Get.back();
+        Get.snackbar("Success", "Password reset successfully.");
+      } else {
+        Get.snackbar("Error", "Failed to reset password.");
+      }
+    } catch (e) {
+      LoadingHelper.hide();
+      Get.snackbar("Error", "Connection error!");
+    }
+  }
+
   @override
-  void onClose() {}
+  void onClose() {
+    userPhoneController.dispose();
+    passwordController.dispose();
+    resetPhoneController.dispose();
+    otpController.dispose();
+    newPasswordController.dispose();
+    super.onClose();
+  }
 }

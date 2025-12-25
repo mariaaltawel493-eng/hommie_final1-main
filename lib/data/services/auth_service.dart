@@ -20,7 +20,7 @@ class UserResponseModel {
 class AuthService extends GetConnect {
   @override
   void onInit() {
-    httpClient.baseUrl = 'http://192.168.1.8:8000';
+    httpClient.baseUrl = 'http://192.168.1.3:8000';
     httpClient.defaultContentType = 'application/json';
   }
 

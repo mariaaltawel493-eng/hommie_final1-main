@@ -8,7 +8,7 @@ class SignupStep4Service {
   Future<Map<String, dynamic>> uploadImages(SignupStep4Model model) async {
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse('http://192.168.1.8:8000/api/auth/register/uploadImages'),
+      Uri.parse('http://192.168.1.3:8000/api/auth/register/uploadImages'),
     );
 
     request.fields['pending_user_id'] = model.pendingUserId.toString();
@@ -37,7 +37,7 @@ class SignupStep4Service {
 
   Future<Map<String, dynamic>> finalizeAccount(int pendingUserId) async {
     final response = await http.post(
-      Uri.parse('http://192.168.1.8:8000/api/auth/register/finalize'),
+      Uri.parse('http://192.168.1.3:8000/api/auth/register/finalize'),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({"pending_user_id": pendingUserId}),
     );

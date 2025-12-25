@@ -1,14 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hommie/modules/auth/controllers/signup_step2_controller.dart';
+import 'package:hommie/modules/auth/views/signup_step1.dart';
 import 'package:hommie/data/models/signup/signup_step2_model.dart';
 import 'package:hommie/app/utils/app_colors.dart';
+
+// ═══════════════════════════════════════════════════════════
+// SAFE SIGNUP STEP 2 SCREEN
+// Checks arguments BEFORE building UI
+// ═══════════════════════════════════════════════════════════
 
 class SignupStep2Screen extends StatelessWidget {
   const SignupStep2Screen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // ═══════════════════════════════════════════════════════════
+    // CHECK ARGUMENTS BEFORE INITIALIZING CONTROLLER
+    // ═══════════════════════════════════════════════════════════
+    if (Get.arguments == null || !Get.arguments.containsKey('pendingUserId')) {
+      print('');
+      print('═══════════════════════════════════════════════════════════');
+      print('❌ SIGNUP STEP 2 SCREEN - NO ARGUMENTS');
+      print('   Redirecting to Step 1...');
+      print('═══════════════════════════════════════════════════════════');
+      
+      // Redirect immediately
+      Future.microtask(() {
+        Get.offAll(() => const SignupStep1Screen());
+        Get.snackbar(
+          'Session Expired',
+          'Please start the signup process again.',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
+      });
+      
+      // Return loading screen while redirecting
+      return Scaffold(
+        backgroundColor: AppColors.backgroundLight,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              CircularProgressIndicator(color: AppColors.primary),
+              SizedBox(height: 20),
+              Text(
+                'Redirecting...',
+                style: TextStyle(color: AppColors.textPrimaryLight),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // ✅ Arguments exist, proceed normally
     final SignupStep2Controller controller = Get.put(SignupStep2Controller());
 
     final baseInputDecoration = InputDecoration(
@@ -32,6 +80,7 @@ class SignupStep2Screen extends StatelessWidget {
         backgroundColor: AppColors.primary,
         centerTitle: true,
         elevation: 0,
+        title: const Text('Sign Up - Step 2'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -80,6 +129,7 @@ class SignupStep2Screen extends StatelessWidget {
                       color: AppColors.textPrimaryLight,
                     ),
                   ),
+                  const SizedBox(height: 8),
                   Obx(() => TextFormField(
                         controller: controller.passwordController,
                         validator: controller.validatePassword,
@@ -151,7 +201,14 @@ class SignupStep2Screen extends StatelessWidget {
                             ),
                           ),
                           child: controller.isLoading.value
-                              ? const CircularProgressIndicator(color: AppColors.backgroundLight)
+                              ? const SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.backgroundLight,
+                                    strokeWidth: 2,
+                                  ),
+                                )
                               : const Text(
                                   'Next →',
                                   style: TextStyle(fontSize: 18, color: AppColors.backgroundLight),

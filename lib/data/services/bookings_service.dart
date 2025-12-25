@@ -7,9 +7,10 @@ import 'dart:convert';
 
 class BookingService extends GetConnect {
   final TokenStorageService _tokenStorage = Get.find<TokenStorageService>();
-  final String baseUrl = 'http://10.0.2.2:8000/api'; // Change to your server
+  @override
+  final String baseUrl = 'http://192.168.1.3:8000/api'; 
 
-  /// Get pending booking requests for owner
+  
   Future<List<BookingRequestModel>> getPendingRequests() async {
     final token = _tokenStorage.getAccessToken();
     if (token == null) {
@@ -32,16 +33,16 @@ class BookingService extends GetConnect {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => BookingRequestModel.fromJson(json)).toList();
       } else {
-        print('❌ Error: ${response.body}');
+        print(' Error: ${response.body}');
         return [];
       }
     } catch (e) {
-      print('❌ Exception getting pending requests: $e');
+      print(' Exception getting pending requests: $e');
       return [];
     }
   }
 
-  /// Approve a booking request
+
   Future<bool> approveRequest(int requestId) async {
     final token = _tokenStorage.getAccessToken();
     if (token == null) return false;
@@ -56,15 +57,15 @@ class BookingService extends GetConnect {
         },
       );
 
-      print('✅ Approve response: ${response.statusCode}');
+      print(' Approve response: ${response.statusCode}');
       return response.statusCode == 200;
     } catch (e) {
-      print('❌ Error approving request: $e');
+      print(' Error approving request: $e');
       return false;
     }
   }
 
-  /// Reject a booking request
+ 
   Future<bool> rejectRequest(int requestId) async {
     final token = _tokenStorage.getAccessToken();
     if (token == null) return false;
@@ -79,15 +80,15 @@ class BookingService extends GetConnect {
         },
       );
 
-      print('❌ Reject response: ${response.statusCode}');
+      print(' Reject response: ${response.statusCode}');
       return response.statusCode == 200;
     } catch (e) {
-      print('❌ Error rejecting request: $e');
+      print(' Error rejecting request: $e');
       return false;
     }
   }
 
-  /// Get all booking requests (with status filter)
+
   Future<List<BookingRequestModel>> getAllRequests({String? status}) async {
     final token = _tokenStorage.getAccessToken();
     if (token == null) {
@@ -116,7 +117,7 @@ class BookingService extends GetConnect {
         return [];
       }
     } catch (e) {
-      print('❌ Exception getting all requests: $e');
+      print(' Exception getting all requests: $e');
       return [];
     }
   }

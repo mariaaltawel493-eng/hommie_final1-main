@@ -3,8 +3,8 @@ import 'package:hommie/data/models/apartment/apartment_model.dart';
 import 'package:http/http.dart' as http;
 
 class ApartmentsService {
-  static const String baseUrl = "http://192.168.1.8:8000/api/"; 
-  static const String imageBaseUrl = "http://192.168.1.8:8000/";
+  static const String baseUrl = "http://192.168.1.3:8000/api/"; 
+  static const String imageBaseUrl = "http://192.168.1.3:8000/";
 
 static String getCleanImageUrl(String serverImagePath) {
     if (serverImagePath.isEmpty) {

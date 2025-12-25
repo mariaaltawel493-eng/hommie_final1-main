@@ -9,8 +9,8 @@ import 'package:hommie/modules/shared/views/favorites_screen.dart';
 import 'package:hommie/modules/shared/views/filter_screen.dart';
 import 'package:hommie/modules/shared/views/profile_screen.dart';
 
-class Home extends StatelessWidget {
-  const Home({super.key});
+class RenterHomeScreen extends StatelessWidget {
+  const RenterHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

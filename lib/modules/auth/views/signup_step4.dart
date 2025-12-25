@@ -8,7 +8,7 @@ class SignupStep4Screen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<SignupStep4Controller>();
+    final controller = Get.put(SignupStep4Controller());
     Widget buildImagePicker(String label, RxString imagePath, VoidCallback onTap) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,

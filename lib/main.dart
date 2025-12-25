@@ -25,10 +25,10 @@ class _Myapp extends State<MyApp> {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       initialRoute: '/',
-      initialBinding: Binding(),
+      initialBinding: InitialBinding(),
       routes: {
         '/': (context) => StartupScreen(),
-        "home": (context) => Home(),
+        "home": (context) => RenterHomeScreen(),
         "welcome": (context) => WelcomeScreen(),
         "/apartment_details": (context) => ApartmentDetailsScreen(),
       },

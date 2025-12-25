@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hommie/app/utils/app_colors.dart';
 import 'package:hommie/data/models/bookings/bookings_request_model.dart';
+import 'package:hommie/data/models/user/user_permission_controller.dart';
 import 'package:hommie/modules/owner/controllers/pending_request_controller.dart';
 import 'package:hommie/modules/owner/controllers/post_ad_controller.dart';
-import 'package:hommie/modules/owner/views/apartment_form_view.dart';
-import 'package:hommie/widgets/apartment_card.dart';
 
 
 
-
+final permissions = Get.find<UserPermissionsController>();
+final controller = Get.find<PostAdController>();
 class PostAdScreen extends StatefulWidget {
   const PostAdScreen({super.key});
 
@@ -60,93 +60,137 @@ class _PostAdViewState extends State<PostAdScreen>
       body: TabBarView(
         controller: _tabController,
         children: [
-          // ═══════════════════════════════════════════════════════
-          // TAB 1: ADD APARTMENT (Your existing code)
-          // ═══════════════════════════════════════════════════════
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                    ),
-                    icon: const Icon(
-                      Icons.add,
-                      color: AppColors.backgroundLight,
-                    ),
-                    label: const Text(
-                      "Adding New Flat",
-                      style: TextStyle(color: AppColors.backgroundLight),
-                    ),
-                    onPressed: () {
-                      c.startNewDraft();
-                      Get.to(() => const ApartmentFormView(isEdit: false));
-                    },
+       // ═══════════════════════════════════════════════════════════
+// UPDATED POST AD VIEW - ADD APARTMENT BUTTON SECTION
+// Replace the "Add Apartment" button section in your PostAdView
+// ═══════════════════════════════════════════════════════════
+
+// Add this at the top of your widget file
+
+
+// REPLACE your existing "Add Apartment" button with this:
+Obx(() {
+  final canPost = permissions.canPostApartments;
+  final isPending = permissions.isPending;
+  final isOwner = permissions.isOwner;
+
+  return Column(
+    children: [
+      // PENDING APPROVAL WARNING (large, prominent)
+      if (isPending && isOwner)
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Colors.orange.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.orange, width: 2),
+          ),
+          child: Column(
+            children: [
+              const Icon(
+                Icons.hourglass_empty,
+                color: Colors.orange,
+                size: 48,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '⏳ حسابك في انتظار الموافقة',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.orange,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'لا يمكنك إضافة شقق حتى تتم الموافقة على حسابك من قبل الإدارة',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.orange[800],
+                ),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () {
+                  // Refresh approval status
+                  permissions.loadApprovalStatus();
+                  Get.snackbar(
+                    'تم التحقق',
+                    'حالة الموافقة: ${permissions.isPending ? "معلقة" : "موافق عليها"}',
+                    backgroundColor: permissions.isPending ? Colors.orange : Colors.green,
+                    colorText: Colors.white,
+                  );
+                },
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('تحقق من الحالة'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.orange,
+                  side: const BorderSide(color: Colors.orange),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
                   ),
                 ),
-                const SizedBox(height: 14),
+              ),
+            ],
+          ),
+        ),
 
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    "Last Flats",
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                
-                // Horizontal List
-                SizedBox(
-                  height: 140,
-                  child: Obx(() {
-                    final list = c.myApartments;
-                    if (list.isEmpty) {
-                      return const Center(child: Text("There are no flats yet"));
-                    }
-                    return ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: list.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 10),
-                      itemBuilder: (_, i) {
-                        final apt = list[i];
-                        return SizedBox(
-                          width: 260,
-                          child: ApartmentCard(
-                            apartment: apt,
-                            showOwnerActions: true,
-                          ),
-                        );
-                      },
-                    );
-                  }),
-                ),
-
-                const SizedBox(height: 14),
-
-                // Vertical List
-                Expanded(
-                  child: Obx(() {
-                    final list = c.myApartments;
-                    if (list.isEmpty) {
-                      return const Center(child: Text("لا يوجد شقق منشورة"));
-                    }
-                    return ListView.separated(
-                      itemCount: list.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 10),
-                      itemBuilder: (_, i) => ApartmentCard(
-                        apartment: list[i],
-                        showOwnerActions: true,
-                      ),
-                    );
-                  }),
-                ),
-              ],
+      // ADD APARTMENT BUTTON (conditional)
+      SizedBox(
+        width: double.infinity,
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: canPost
+                ? const Color(0xFF4A90E2) // Blue when enabled
+                : Colors.grey[300], // Grey when disabled
+            foregroundColor: canPost ? Colors.white : Colors.grey[600],
+            disabledBackgroundColor: Colors.grey[300],
+            disabledForegroundColor: Colors.grey[600],
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            elevation: canPost ? 2 : 0,
+          ),
+          icon: Icon(
+            canPost ? Icons.add_circle_outline : Icons.lock,
+            size: 24,
+          ),
+          label: Text(
+            canPost ? 'أضف شقة جديدة' : 'إضافة شقة (معطل)',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
           ),
+          onPressed: canPost
+              ? () {
+                  controller.onAddApartmentPressed();
+                }
+              : null, // DISABLED if can't post
+        ),
+      ),
 
+      const SizedBox(height: 16),
+
+      // Info text when disabled
+      if (!canPost && isOwner)
+        Text(
+          'سيتم تفعيل زر الإضافة بعد موافقة الإدارة على حسابك',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+    ],
+  );
+}),
           // ═══════════════════════════════════════════════════════
           // TAB 2: PENDING REQUESTS (Owner Dashboard)
           // ═══════════════════════════════════════════════════════

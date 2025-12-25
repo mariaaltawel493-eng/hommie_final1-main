@@ -22,7 +22,7 @@ class HomeController extends GetxController {
   }
 
   void goToDetails(ApartmentModel apartment) {
-    Get.to(() => const ApartmentDetailsScreen(), arguments: apartment);
+    Get.to(() =>  ApartmentDetailsScreen(), arguments: apartment);
   }
 
   Future<void> fetchApartments() async {

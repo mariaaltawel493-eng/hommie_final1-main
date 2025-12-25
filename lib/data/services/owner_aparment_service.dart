@@ -8,7 +8,7 @@ import 'package:http/http.dart' as http;
 
 class ApartmentApi {
   final List<OwnerApartmentModel> _db = [];
-  final baseUrl = 'http://192.168.1.8:8000/api/owner';
+  final baseUrl = 'http://192.168.1.3/api/owner';
   final apartmentEndpoint = '/apartments';
   final TokenStorageService _storage = Get.find<TokenStorageService>();
 

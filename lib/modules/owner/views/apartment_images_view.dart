@@ -43,7 +43,7 @@ class _ApartmentImagesViewState extends State<ApartmentImagesView> {
 
 Future<void> _pickImages() async {
   final List<XFile> images = await _picker.pickMultiImage();
-  if (images != null && images.isNotEmpty) {
+  if (images.isNotEmpty) {
     setState(() {
       _selectedImages.addAll(images);
     });

@@ -1,5 +1,10 @@
 import 'package:get_storage/get_storage.dart';
 
+// ═══════════════════════════════════════════════════════════
+// TOKEN STORAGE SERVICE - DIAGNOSTIC VERSION
+// This will help find what's causing the infinite loop
+// ═══════════════════════════════════════════════════════════
+
 class TokenStorageService {
   final GetStorage _box = GetStorage();
   
@@ -7,79 +12,67 @@ class TokenStorageService {
   static const String _isApprovedKey = 'is_approved';
   static const String _userPhoneKey = 'user_phone';
 
+  // Track how many times getAccessToken is called
+  int _callCount = 0;
+  DateTime? _lastPrint;
+
   Future<void> saveAccessToken(String token) async {
     await _box.write(_accessTokenKey, token);
-    print(' Token saved to storage: $token');
+    print('✅ Token saved to storage');
   }
 
   String? getAccessToken() {
+    _callCount++;
+    
+    // Only print every 100 calls to avoid spam
+    final now = DateTime.now();
+    if (_lastPrint == null || now.difference(_lastPrint!) > Duration(seconds: 1)) {
+      print('');
+      print('🔥 INFINITE LOOP DETECTED!');
+      print('   getAccessToken called $_callCount times in 1 second');
+      print('   Called from:');
+      
+      // Print stack trace to see WHO is calling this
+      final stack = StackTrace.current.toString().split('\n');
+      for (int i = 1; i < 5 && i < stack.length; i++) {
+        print('   $i: ${stack[i].trim()}');
+      }
+      print('');
+      
+      _callCount = 0;
+      _lastPrint = now;
+    }
+    
     final token = _box.read(_accessTokenKey);
-    print(' Token retrieved from storage: $token');
     return token;
   }
 
-
   Future<void> saveApprovalStatus(bool isApproved) async {
     await _box.write(_isApprovedKey, isApproved);
+    print('✅ Approval status saved: $isApproved');
   }
-
 
   bool? getApprovalStatus() {
     return _box.read(_isApprovedKey);
   }
 
-
   Future<void> saveUserPhone(String phone) async {
     await _box.write(_userPhoneKey, phone);
+    print('✅ User phone saved');
   }
-
 
   String? getUserPhone() {
     return _box.read(_userPhoneKey);
   }
 
-
-  Future<void> saveLoginData({
-    required String token,
-    required String phone,
-    bool? isApproved,
-  }) async {
-    await _box.write(_accessTokenKey, token);
-    await _box.write(_userPhoneKey, phone);
-    if (isApproved != null) {
-      await _box.write(_isApprovedKey, isApproved);
-    }
-    
-
-    print(' Login data saved:');
-    print(' Token: $token');
-    print(' Phone: $phone');
-    print(' Approved: $isApproved');
-  }
-
-  
-  bool get isLoggedIn => getAccessToken() != null;
-
   Future<void> clearAll() async {
-    await _box.remove(_accessTokenKey);
-    await _box.remove(_isApprovedKey);
-    await _box.remove(_userPhoneKey);
-    print(' All tokens cleared');
-  }
-
-
-  Future<void> eraseAll() async {
     await _box.erase();
+    print('✅ All data cleared');
   }
 
-
-  void debugPrintAll() {
-    print('=== GetStorage Debug ===');
-    print('Token: ${_box.read(_accessTokenKey)}');
-    print('Phone: ${_box.read(_userPhoneKey)}');
-    print('Approved: ${_box.read(_isApprovedKey)}');
-    print('Is Logged In: $isLoggedIn');
-    print('All keys: ${_box.getKeys()}');
-    
+  bool get isLoggedIn {
+    // Don't call getAccessToken here - it creates a loop!
+    final token = _box.read(_accessTokenKey);
+    return token != null;
   }
 }

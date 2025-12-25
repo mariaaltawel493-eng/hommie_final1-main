@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 class OtpService extends GetxService {
-  final String baseUrl = 'http://192.168.1.8:8000/api';
+  final String baseUrl = 'http://192.168.1.3:8000/api';
 
   Future<Map<String, dynamic>> sendOtp(String phone) async {
     return _postOtp(phone, 'sendOtpForRegister');
