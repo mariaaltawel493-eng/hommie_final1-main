@@ -14,29 +14,38 @@ class RenterHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final HomeController controller = Get.find<HomeController>();
+    final HomeController controller = Get.put(HomeController());
     final List<Widget> pages = [
       const ApartmentsScreen(),
       const FilterScreen(),
       const FavoritesScreen(),
       const ChatScreen(),
-      const ProfileScreen(),   
+      const ProfileScreen(),
     ];
 
     return Scaffold(
-      appBar: AppBar(backgroundColor: AppColors.primary,title:Text("Hommie",style: TextStyle(color: AppColors.textPrimaryDark,fontSize: 32)) ,centerTitle: true,),
+      appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        title: Text(
+          "Hommie",
+          style: TextStyle(color: AppColors.textPrimaryDark, fontSize: 32),
+        ),
+        centerTitle: true,
+      ),
       backgroundColor: AppColors.backgroundLight,
 
       body: PageView(
         controller: controller.pageController,
-        physics: const NeverScrollableScrollPhysics(), 
+        physics: const NeverScrollableScrollPhysics(),
         children: pages,
       ),
-      
-      bottomNavigationBar: Obx(() => CustomNavBar(
-        currentIndex: controller.currentIndex.value,
-        onTap: controller.changeTabIndex,
-      )),
+
+      bottomNavigationBar: Obx(
+        () => CustomNavBar(
+          currentIndex: controller.currentIndex.value,
+          onTap: controller.changeTabIndex,
+        ),
+      ),
     );
   }
 }
